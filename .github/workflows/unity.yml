@@ -1,4 +1,4 @@
-name: Unity Build (Android)
+name: Unity Build (WebGL temporary)
 
 on:
   push:
@@ -6,15 +6,16 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-android:
+  build-webgl:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          lfs: true
+          lfs: true  # pull LFS assets if you use them
 
-      - name: Setup .NET
+      - name: Setup .NET (some Unity editors require it)
         uses: actions/setup-dotnet@v4
 
       - name: Cache Library
@@ -23,22 +24,55 @@ jobs:
           path: Library
           key: Library-${{ hashFiles('**/Packages/manifest.json') }}
 
-      - name: Build (Android)
+      - name: Build (WebGL)
         uses: game-ci/unity-builder@v4
         with:
-          targetPlatform: Android
-          unityVersion: 6000.0.54f1   # <-- has an android image tag
+          # Temporary smoke-check build target so CI matches your local editor version
+          targetPlatform: WebGL
+          unityVersion: 6000.2.10f1
           buildName: rotterdam-docking-vr
-          buildsPath: build/Android   # <-- corrected input name
-          allowDirtyBuild: true
+          buildsPath: build
           cacheUnity: true
+          allowDirtyBuild: true
+          # If you only want specific scenes, uncomment and set:
+          # scenes: Assets/Scenes/DockingDemo.unity
         env:
           UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
-      - name: Upload APK
+      - name: Upload WebGL build
         uses: actions/upload-artifact@v4
         with:
-          name: quest3-apk
-          path: build/Android/*.apk
+          name: webgl-build
+          path: build/WebGL/**
+
+# --- HOW TO SWITCH BACK TO ANDROID LATER ---
+# When a unityci/editor Android image is available for 6000.2.10f1,
+# change the Build step above to:
+#
+#   targetPlatform: Android
+#   unityVersion: 6000.2.10f1
+#   buildName: rotterdam-docking-vr
+#   buildsPath: build/Android
+#
+# And update the Upload step to:
+#
+#   name: Upload APK
+#   with:
+#     name: quest3-apk
+#     path: build/Android/*.apk
+#
+# If you use a keystore for signing, also add these secrets:
+#   ANDROID_KEYSTORE_BASE64, ANDROID_KEYSTORE_PASS,
+#   ANDROID_KEY_ALIAS, ANDROID_KEY_ALIAS_PASS
+# …and insert a keystore decode step before the build:
+#
+#   - name: Decode keystore
+#     run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > user.keystore
+#
+# Then add these inputs to the unity-builder step:
+#   keystoreName: user.keystore
+#   keystorePass: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+#   keystoreAliasName: ${{ secrets.ANDROID_KEY_ALIAS }}
+#   keystoreAliasPass: ${{ secrets.ANDROID_KEY_ALIAS_PASS }}
