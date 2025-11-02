@@ -1,0 +1,1 @@
+This folder ensures Resources/ exists in the initial commit. You can remove it later.
