@@ -1,0 +1,40 @@
+name: Rotterdam Docking VR
+on_clone:
+- task: ensure-unity-project
+- task: install-xr-packages
+- task: setup-cesium-hooks
+
+
+tasks:
+ensure-unity-project:
+goal: "Validate Unity 6 URP Android/Quest configuration"
+steps:
+- verify_files_exist:
+paths:
+- ProjectSettings/ProjectVersion.txt
+- Packages/manifest.json
+install-xr-packages:
+goal: "Install OpenXR, XR Interaction Toolkit, Input System and enable OpenXR for Android"
+steps:
+- unity_add_packages: ["com.unity.xr.openxr", "com.unity.xr.interaction.toolkit", "com.unity.inputsystem"]
+- unity_set_xr_openxr: { android: true, windows: true }
+setup-cesium-hooks:
+goal: "Prepare scene bootstrap hooks for Cesium"
+steps:
+- unity_generate_csharp:
+path: "Assets/Scripts/Tiles/CesiumBootstrap.cs"
+description: "Creates/validates Cesium root objects and logs guidance if components are missing"
+make-demo-scene:
+goal: "Create DockingDemo scene with XR rig, waypoints, and time slider"
+steps:
+- unity_create_scene: "Assets/Scenes/DockingDemo.unity"
+- unity_add_prefab: { name: "XR Rig" }
+- unity_generate_csharp:
+path: "Assets/Scripts/Nav/Waypoint.cs"
+description: "Serializable waypoint with label and radius"
+- unity_generate_csharp:
+path: "Assets/Scripts/Nav/WaypointSystem.cs"
+description: "Simple waypoint list + teleport/jump logic"
+- unity_generate_csharp:
+path: "Assets/Scripts/UI/TimeSlider.cs"
+description: "Slider that fires OnTimeChanged(DateTime) events"
