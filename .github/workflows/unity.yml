@@ -1,0 +1,26 @@
+﻿name: Unity Build
+on: [push, pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+
+      - name: Cache Library
+        uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-${{ hashFiles('**/Packages/manifest.json') }}
+
+      # (Optional but recommended) pick the Unity editor version your project uses
+      # unityVersion can be set here or via a UNITY_VERSION env/secret.
+      - name: Build (Android)
+        uses: game-ci/unity-builder@v4
+        with:
+          targetPlatform: Android
+          unityVersion: 2023.3.15f1
+          allowDirtyBuild: true
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
