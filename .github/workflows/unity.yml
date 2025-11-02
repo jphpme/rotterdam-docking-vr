@@ -1,4 +1,4 @@
-﻿name: Unity Build (Android)
+name: Unity Build (Android)
 on: [push, pull_request]
 jobs:
 build:
